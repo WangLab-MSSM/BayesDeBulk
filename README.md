@@ -10,7 +10,7 @@ For more information, please visit or cite the related preprint: [Petralia, F., 
 
 The following command will perform tumor deconvolution with an input signature matrix for combined multi-omic data, including a protein abundance file and RNA expression file.
 
-```
+```sh
 cd R
 Rscript main.R --multiomic=TRUE --abundanceFile='../test_data/proteo_dummy.tsv' --expressionFile='../test_data/RNA_dummy.tsv' --signatureMatrix='../test_data/LM22_combined_cell_types.tsv' --rowMeansImputation=TRUE
 ```

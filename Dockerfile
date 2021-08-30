@@ -10,8 +10,8 @@ RUN R -e "install.packages('R.utils',dependencies=TRUE, repos='http://cran.rstud
 
 
 # copy scripts
-COPY ./R/main_docker_multiomic.R /bin/main_docker_multiomic.R
-RUN chmod 777 /bin/main_docker_multiomic.R
+COPY ./R/main.R /bin/main.R
+RUN chmod 777 /bin/main.R
 COPY ./R/function_bulk_repulsive_github.R /bin/function_bulk_repulsive_github.R
 RUN chmod 777 /bin/function_bulk_repulsive_github.R
 

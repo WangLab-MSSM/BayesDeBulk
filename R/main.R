@@ -1,20 +1,51 @@
-# Rscript main_docker_multiomic.R --multiomic=${multiomic} --abundanceFile=${abundanceFile} --expressionFile=${expressionFile} --signatureMatrix=${signatureMatrix} --rowMeansImputation=TRUE
-
-source("./function_bulk_repulsive_github.R")
+# Rscript main.R --multiomic=${multiomic} --abundanceFile=${abundanceFile} --expressionFile=${expressionFile} --signatureMatrix=${signatureMatrix} --rowMeansImputation=TRUE
 
 library("R.utils")
 library(matrixStats)
+library(base)
+
+thisFile <- function() {
+        cmdArgs <- commandArgs(trailingOnly = FALSE)
+        needle <- "--file="
+        match <- grep(needle, cmdArgs)
+        if (length(match) > 0) {
+                # Rscript
+                return(normalizePath(sub(needle, "", cmdArgs[match])))
+        } else {
+                # 'source'd via R console
+                return(normalizePath(sys.frames()[[1]]$ofile))
+        }
+}
+
+script_dir <- file.path(dirname(thisFile()))
+source(paste(script_dir, '/function_bulk_repulsive_github.R', sep=''))
 
 args <- commandArgs(asValue=TRUE, excludeReserved=TRUE)
 keys <- attachLocally(args)
-multiomic=TRUE
 
-# accept input file paths as command line args
-df_f1 <- expressionFile # path to expression file
+if (!('multiomic' %in% keys)) {
+  multiomic = FALSE
+  print('using default singleomic')
+} else {
+  multiomic <- eval(parse(text=multiomic))
+}
+
+if (multiomic == FALSE) {
+  if ('expressionFile' %in% keys) {
+    if ('abundanceFile' %in% keys) {
+      warning('Two input files detected, but multiomic set to FALSE. Running single-omic with expression file.')
+    }
+    df_f1 <- expressionFile # path to expression file
+  } else {
+    df_f1 <- abundanceFile
+  }
+}
+
 signature_matrix_f <- signatureMatrix # path to signature matrix
 
 if (multiomic) {
-  df_f2 <- abundanceFile # path to protein abundance file
+  df_f1 <- expressionFile
+  df_f2 <- abundanceFile
 }
 
 if ('rowMeansImputation' %in% keys) { # boolean whether to run row means imputation, default TRUE
@@ -23,6 +54,7 @@ if ('rowMeansImputation' %in% keys) { # boolean whether to run row means imputat
     rowMeansImputation <- TRUE
   }
 } else {
+  print('Defaulting to rowMeansImputation = TRUE')
   rowMeansImputation <- TRUE
 }
 
@@ -39,11 +71,13 @@ if (anyNA(df1) & rowMeansImputation) {
   df1[k] <- rowMeans(df1, na.rm=TRUE)[k[,1]]
 }
 
-if (multiomic & anyNA(df2) & rowMeansImputation) {
-  print('Performing rowMeansImputation.')
-  df2 <- df2[which(rowMeans(!is.na(df2)) > 0.5), ]
-  k <- which(is.na(df2), arr.ind=TRUE)
-  df2[k] <- rowMeans(df2, na.rm=TRUE)[k[,1]]
+if (multiomic & rowMeansImputation) {
+  if (anyNA(df2)) {
+    print('Performing rowMeansImputation.')
+    df2 <- df2[which(rowMeans(!is.na(df2)) > 0.5), ]
+    k <- which(is.na(df2), arr.ind=TRUE)
+    df2[k] <- rowMeans(df2, na.rm=TRUE)[k[,1]]
+  }
 }
 
 # check that dataframe has no NA
@@ -51,8 +85,10 @@ if (anyNA(df1)) {
   stop("Missing values found in data 1. Consider setting rowMeansImputation=TRUE.")
 }
 
-if (multiomic & anyNA(df2)) {
-  stop("Missing values found in data 1. Consider setting rowMeansImputation=TRUE.")
+if (multiomic) {
+  if (anyNA(df2)) {
+    stop("Missing values found in data 1. Consider setting rowMeansImputation=TRUE.")
+  }
 }
 
 # slim down signature matrix and df based on intersecting genes

@@ -1,4 +1,4 @@
-# Rscript main.R --multiomic=${multiomic} --abundanceFile=${abundanceFile} --expressionFile=${expressionFile} --signatureMatrix=${signatureMatrix} --rowMeansImputation=TRUE
+# Rscript main.R --multiomic=${multiomic} --abundanceFile=${abundanceFile} --expressionFile=${expressionFile} --signatureMatrix=${signatureMatrix}
 
 library("R.utils")
 library(matrixStats)
@@ -48,160 +48,78 @@ if (multiomic) {
   df_f2 <- abundanceFile
 }
 
-if ('rowMeansImputation' %in% keys) { # boolean whether to run row means imputation, default TRUE
-  rowMeansImputation <- eval(parse(text=rowMeansImputation))
-  if (!is.logical(rowMeansImputation)) {
-    rowMeansImputation <- TRUE
-  }
-} else {
-  print('Defaulting to rowMeansImputation = TRUE')
-  rowMeansImputation <- TRUE
-}
-
 # read input files into dataframes 
-df1 <- read.csv(df_f1, sep = "\t", row.names = 1) # -- as input we can specify multiple files for multi-omic learning
-if (multiomic==TRUE) df2 <- read.csv(df_f2, sep = "\t", row.names = 1) # -- if multiomic learning, load additional data file
-ref <- read.csv(signature_matrix_f, sep = "\t", row.names = 1)
+df1 <- read.csv(df_f1, sep = ",", row.names = 1) # -- as input we can specify multiple files for multi-omic learning
+if (multiomic==TRUE) df2 <- read.csv(df_f2, sep = ",", row.names = 1) # -- if multiomic learning, load additional data file
 
-# if using rowMeansImputation, drop rows > 50% NA and impute
-if (anyNA(df1) & rowMeansImputation) {
-  print('Performing rowMeansImputation.')
-  df1 <- df1[which(rowMeans(!is.na(df1)) > 0.5), ]
-  k <- which(is.na(df1), arr.ind=TRUE)
-  df1[k] <- rowMeans(df1, na.rm=TRUE)[k[,1]]
-}
+markers <- read.csv(signature_matrix_f, sep = ",",header=TRUE, row.names = 1) # -- genes x cell.type matrix, with (i,j) element equal to 1 if gene i is a marker of cell-type j and 0 otherwise
 
-if (multiomic & rowMeansImputation) {
-  if (anyNA(df2)) {
-    print('Performing rowMeansImputation.')
-    df2 <- df2[which(rowMeans(!is.na(df2)) > 0.5), ]
-    k <- which(is.na(df2), arr.ind=TRUE)
-    df2[k] <- rowMeans(df2, na.rm=TRUE)[k[,1]]
-  }
-}
+# -- transform ref in a list object
+ref<-list()
+for (s in 1:dim(markers)[2]) ref[[s]]<-rownames(markers)[markers[,s]==1]
+cellTypeNames<-names(ref)<-colnames(markers)
 
 # check that dataframe has no NA
 if (anyNA(df1)) {
-  stop("Missing values found in data 1. Consider setting rowMeansImputation=TRUE.")
+  stop("Missing values found in data 1. Missing values not allowed.")
 }
 
 if (multiomic) {
   if (anyNA(df2)) {
-    stop("Missing values found in data 1. Consider setting rowMeansImputation=TRUE.")
+    stop("Missing values found in data 2. Missing values not allowed.")
   }
 }
 
 # slim down signature matrix and df based on intersecting genes
-ref1 <- as.data.frame(ref[intersect(rownames(ref), rownames(df1)),])
-df1 <- as.data.frame(df1[intersect(rownames(ref1), rownames(df1)),])
-
-if (multiomic){
-  ref2 <- as.data.frame(ref[intersect(rownames(ref), rownames(df2)),]) 
-  df2 <- as.data.frame(df2[intersect(rownames(ref2), rownames(df2)),])
-  
+if (multiomic) {
+  for (s in 1:length(ref)) ref[[s]] <- ref[[s]][intersect(ref[[s]], unique(c(rownames(df1),rownames(df2))))]
+  df1 <- as.data.frame(df1[intersect(rownames(df1),unique(unlist(ref))),])
+  df2 <- as.data.frame(df2[intersect(rownames(df2),unique(unlist(ref))),])
   df2<-df2[,match(colnames(df1),colnames(df2))] # match samples in df2 to that of df1
-}
-
-# create list.gene from signature matrix for data 1
-cellTypeNames <- colnames(ref1)
-marker.1 <- list()
-taggedNames <- c()
-for (i in seq(dim(ref1)[2])) {
-  s = cellTypeNames[i]
-  tempMarkers <- rownames(ref1[ref1[,s] > quantile(ref1[,s], prob=0.75),])
-  markers <- c()
-  if (length(args) > 2) {
-    if (tolower(args[3]) == "pairwise") {
-      tempTb = 2 * ref1[,cellTypeNames[cellTypeNames != s]] - ref1[,s]
-      markers <- tempMarkers[tempMarkers %in% rownames(ref1[rowSums(tempTb < 0) == (length(cellTypeNames) - 1), ])]
-    } else {
-      markers <- tempMarkers[tempMarkers %in% rownames(ref1)[ref1[,s] > 2 * rowMedians(as.matrix(ref1))]]
-    }
-  } else {
-    markers <- tempMarkers[tempMarkers %in% rownames(ref1)[ref1[,s] > 2 * rowMedians(as.matrix(ref1))]]
-  }
-  if (length(markers) == 0) {
-    deOverMedians <- (ref1[tempMarkers,s] - rowMedians(as.matrix(ref1[tempMarkers,])))/rowMedians(as.matrix(ref1[tempMarkers,]))
-    markers <- tempMarkers[deOverMedians > quantile(deOverMedians, prob=0.9)]
-  }
-  marker.1[[i]] <- markers
-  taggedNames <- c(taggedNames, paste0(colnames(ref1)[i], "%", cellTypeNames[i], toString(i), "%", cellTypeNames[i], toString(i), ".txt"))
-}
-names(marker.1) <- taggedNames
-
-list.gene.1 <- marker.1
-data.1 <- df1
-
-# create list.gene from signature matrix for data 2
-if (multiomic==TRUE){
-  cellTypeNames <- colnames(ref2)
-  marker.2 <- list()
-  taggedNames <- c()
-  for (i in seq(dim(ref2)[2])) {
-    s = cellTypeNames[i]
-    tempMarkers <- rownames(ref2[ref2[,s] > quantile(ref2[,s], prob=0.75),])
-    markers <- c()
-    if (length(args) > 2) {
-      if (tolower(args[3]) == "pairwise") {
-        tempTb = 2 * ref2[,cellTypeNames[cellTypeNames != s]] - ref2[,s]
-        markers <- tempMarkers[tempMarkers %in% rownames(ref2[rowSums(tempTb < 0) == (length(cellTypeNames) - 1), ])]
-      } else {
-        markers <- tempMarkers[tempMarkers %in% rownames(ref2)[ref2[,s] > 2 * rowMedians(as.matrix(ref2))]]
-      }
-    } else {
-      markers <- tempMarkers[tempMarkers %in% rownames(ref2)[ref2[,s] > 2 * rowMedians(as.matrix(ref2))]]
-    }
-    if (length(markers) == 0) {
-      deOverMedians <- (ref2[tempMarkers,s] - rowMedians(as.matrix(ref2[tempMarkers,])))/rowMedians(as.matrix(ref2[tempMarkers,]))
-      markers <- tempMarkers[deOverMedians > quantile(deOverMedians, prob=0.9)]
-    }
-    marker.2[[i]] <- markers
-    taggedNames <- c(taggedNames, paste0(colnames(ref2)[i], "%", cellTypeNames[i], toString(i), "%", cellTypeNames[i], toString(i), ".txt"))
-  }
   
-  names(marker.2) <- taggedNames
-  list.gene.2 <- marker.2
-  data.2 <- df2
-}
+} else {
+  for (s in 1:length(ref)) ref[[s]] <- ref[[s]][intersect(ref[[s]], rownames(df1))]
+  df1 <- as.data.frame(df1[intersect(rownames(df1),unique(unlist(ref))),])
+}  
 
+data.1<-df1
+if (multiomic) data.2<-df2
 
 # generate index.matrix, k.fix, and prior from list.gene
-k.fix <- length(list.gene.1)
+k.fix <- length(ref)
 
 compute.index.matrix<-function(list.gene,data){
   k.fix<-length(list.gene)
   index.matrix<-c(NULL,NULL,NULL)
-  for (s in 2:k.fix){
-  for (k in 1:(s-1)) {
-    index.s<-c(NULL,NULL,NULL)
+  for (s in 1:k.fix){
+  for (k in 1:k.fix) {
+    if (s!=k){
     mg<-match(list.gene[[s]],list.gene[[k]])
     gene<-list.gene[[s]][is.na(mg)]
-    if (length(gene)>0) index.s<-rbind(index.s,cbind(rep(s,length(gene)),rep(k,length(gene)),gene))
+    if (length(gene)>0) index.matrix<-rbind(index.matrix,cbind(rep(s,length(gene)),rep(k,length(gene)),gene))
     
-    mg<-match(list.gene[[k]],list.gene[[s]])
-    gene<-list.gene[[k]][is.na(mg)]
-    if (length(gene)>0) index.s<-rbind(index.s,cbind(rep(k,length(gene)),rep(s,length(gene)),gene))
-    
-    index.matrix<-rbind(index.matrix,index.s)
+    }
+    }
   }
-  }
+
   # set gene symbols to indexes in df
   mg<-match(index.matrix[,3],rownames(data))
   index.matrix[,3]<-mg
-  index.matrix<-index.matrix[!is.na(mg),]
   index.matrix<-apply(index.matrix,2,as.numeric)
   
 return(index.matrix)
 }
 
-index.matrix.1<-compute.index.matrix(list.gene.1,data.1)
-if (multiomic) index.matrix.2<-compute.index.matrix(list.gene.2,data.2)
+index.matrix.1<-compute.index.matrix(ref,data.1)
+if (multiomic) index.matrix.2<-compute.index.matrix(ref,data.2)
 
 # -- combine data
 if (multiomic) {
   data<-rbind(data.1,data.2) 
   index.matrix.2[,3]<-index.matrix.2[,3]+dim(data.1)[1]
   index.matrix<-rbind(index.matrix.1,index.matrix.2) 
+  
+  rownames(data)<-c(paste(rownames(data.1),"-RNA"),paste(rownames(data.2),"-Pro"))
 } else {
   index.matrix<-index.matrix.1
   data<-data.1
@@ -210,10 +128,11 @@ if (multiomic) {
 prior <- matrix(0,dim(data)[1],k.fix)
 
 # set n.iter and burn.in
-n.iter <- 10
-burn.in <- 1
+n.iter <- 10000 
+burn.in <- 1000
 
 # run gibbs
+
 gibbs<-gibbs.sampling(
   n.iter=n.iter,
   data,
@@ -226,7 +145,18 @@ gibbs<-gibbs.sampling(
   sigma.prior=1
 )
 
-write.table(gibbs[[1]][[1]],"output_bayes_de_bulk.tsv",row.names=TRUE, col.names=NA, sep='\t', quote = FALSE)
+# -- derive point estimate for each cell type (average across MCMC iterations)
+weights<-matrix(0,dim(gibbs[[1]][[1]]),length(gibbs[[1]]))
+mu<-matrix(0,dim(gibbs[[2]][[1]]),length(gibbs[[1]]))
+for (s in 1:length(gibbs[[1]])) {
+  weights[,s]<-apply(gibbs[[1]][[s]],1,mean)
+  mu[,s]<-apply(gibbs[[2]][[s]],1,mean)
+}
+weights<-apply(weights,1,function(x) (x/sum(x))) # -- normalize weights to sum to one
+colnames(weights)<-colnames(mu)<-colnames(ref)
+
+write.table(weights,"weights_bayesdebulk.tsv",row.names=TRUE, col.names=TRUE, sep='\t', quote = FALSE) # - matrix (samples x cell type), with (i,j) element being the fraction of the jth  cell type for sample i 
+write.table(mu,"mean_parameter_bayesdebulk.tsv",row.names=TRUE, col.names=TRUE, sep='\t', quote = FALSE) # - matrix (genes x cell type), with (i,j) element being the mean of the i-the marker for the j-th cell type
 
 # save gibbs object and signature matrix to rda file
-save(gibbs, list.gene.1, index.matrix, file="output_bayes_de_bulk.Rdata")
+save(gibbs,nu,weights, list.gene.1, index.matrix, file="output_bayes_de_bulk.Rdata")

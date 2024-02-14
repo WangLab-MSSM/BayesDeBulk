@@ -25,3 +25,10 @@ For more information, please visit or cite the related preprint:
 
 ## Algorithm schematic
 ![alt text](./algorithm_schematic.png)
+
+Algorithm Schematic. (A) Bulk data is modeled as a linear combination of marker expression in different cell
+types. Given a list of markers expressed in each cell type, a Repulsive prior is placed on the mean of marker expression
+in different cell types to ensure that cell type specific markers are upregulated in a particular component. (B) Multi-omic
+framework to estimate cell type fractions integrating proteomic and RNAseq data. Given a list of cell-type specific markers,
+the algorithm returns the estimated protein/RNA expression for different cell types and cell-type fractions for different
+samples.

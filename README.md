@@ -18,7 +18,7 @@ For more information, please visit or cite the related preprint:
 ## Installing BayesDeBulk package in R Cran
 * Requires R >= 3.6
 
-install_packages("BayesDeBulk_1.0.tar.gz")
+* install_packages("BayesDeBulk_1.0.tar.gz")
 
 
 ## Algorithm schematic

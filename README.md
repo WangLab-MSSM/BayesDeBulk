@@ -15,10 +15,12 @@ For more information, please visit or cite the related preprint:
 
 [Petralia, F., Calinawan, A. P., Feng, S., Gosline, S., Pugliese, P., Ceccarelli, M., & Wang, P. (2021). BayesDeBulk: A Flexible Bayesian Algorithm for the Deconvolution of Bulk Tumor Data. doi.org/10.1101/2021.06.25.449763](https://www.biorxiv.org/content/10.1101/2021.06.25.449763v4)
 
-## Installing BayesDeBulk package in R Cran
+## Installing BayesDeBulk package in R 
 * Requires R >= 3.6
+* Download BayesDeBulk_1.0.tar.gz file
+* Install package from command line of R using
 
-* install_packages("BayesDeBulk_1.0.tar.gz")
+  install_packages("BayesDeBulk_1.0.tar.gz")
 
 
 ## Algorithm schematic

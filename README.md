@@ -2,7 +2,7 @@
 
 * [Introduction](#introduction)
 * [Citation](#citation)
-* [Installing BayesDeBulk package in R Cran](#running-from-the-command-line)
+* [Installing BayesDeBulk package in R](#running-from-the-command-line)
 * [Algorithm schematic](#algorithm-schematic)
 
 

@@ -2,10 +2,7 @@
 
 * [Introduction](#introduction)
 * [Citation](#citation)
-* [Running from the command line](#running-from-the-command-line)
-* [Docker image](#docker-image)
-* [Inputs](#inputs)
-* [Outputs](#outputs)
+* [Installing BayesDeBulk package in R Cran](#running-from-the-command-line)
 * [Algorithm schematic](#algorithm-schematic)
 
 

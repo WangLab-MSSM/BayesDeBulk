@@ -21,30 +21,10 @@ For more information, please visit or cite the related preprint:
 ## Running from the command line
 * Requires R >= 3.6
 
-The following command will perform tumor deconvolution with an input signature matrix for combined multi-omic data, including a protein abundance file and RNA expression file.
+Install R package in R Cran
 
-```sh
-cd R
-Rscript main.R --multiomic=TRUE --abundanceFile='../test_data/proteo_dummy.tsv' --expressionFile='../test_data/RNA_dummy.tsv' --signatureMatrix='../test_data/LM22_combined_cell_types.tsv' --rowMeansImputation=TRUE
-```
+install_packages("BayesDeBulk_1.0.tar.gz")
 
-## Docker image
-
-The code and test data are available as a Docker image tagged [cptacdream/bayesdebulk](https://hub.docker.com/repository/docker/cptacdream/bayesdebulk).
-
-
-## Inputs
-
-| flag               | type     | default | description                                                                                             |
-|--------------------|----------|---------|---------------------------------------------------------------------------------------------------------|
-| multiomic          | boolean  | FALSE   | indicates whether to compute tumor deconvolution with both RNA expression and protein abundance         |
-| abundanceFile      | filepath |         | path to tab-separated protein abundance table file, where rows are gene symbols and columns are samples |
-| expressionFile     | filepath |         | path to tab-separated RNA expression table file, where rows are gene symbols and columns are samples    |
-| signatureMatrix    | filepath |         | path to signature matrix table file, where rows are gene symbols and columns are cell types             |
-| rowMeansImputation | boolean  | TRUE    | indicates whether to perform row means imputation for NA values in -omics files                         |
-
-
-## Outputs
 
 ## Algorithm schematic
 ![alt text](./algorithm_schematic.png)

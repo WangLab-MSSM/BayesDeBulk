@@ -1,0 +1,20 @@
+Package: BayesDeBulk
+Version: 1.0
+Date: 2023-11-21
+Title: BayesDeBulk: A Flexible Bayesian Algorithm for the Deconvolution
+        of Bulk Data
+Authors@R: c(person("Francesca", "Petralia", role = c("aut", "cre"),
+                     email = "francesca.petralia@mssm.edu"),
+              person("Pei", "Wang", role = "aut"))
+Depends: R (>= 3.5.0)
+Suggests: MASS
+Imports: R.utils, matrixStats, base, MCMCpack, truncnorm, Rfast
+Description: BayesDeBulk: A Flexible Bayesian Algorithm for the Deconvolution of Bulk Data
+License: GPL (>= 2)
+URL: https://www.r-project.org
+Packaged: 2024-02-13 15:31:12 UTC; petraf01
+NeedsCompilation: yes
+Author: Francesca Petralia [aut, cre],
+  Pei Wang [aut]
+Maintainer: Francesca Petralia <francesca.petralia@mssm.edu>
+RoxygenNote: 7.2.1

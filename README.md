@@ -18,9 +18,8 @@ For more information, please visit or cite the related preprint:
 
 ## Installing BayesDeBulk package in R 
 
-* require(doParallel)
 * library(devtools)
-* install_github("WangLab-MSSM/BayesDeBulk")
+* install_github("WangLab-MSSM/BayesDeBulk/BayesDeBulk")
 
 
 ## Algorithm schematic

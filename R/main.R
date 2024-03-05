@@ -72,7 +72,7 @@ if (multiomic) {
 
 # slim down signature matrix and df based on intersecting genes
 if (multiomic) {
-  for (s in 1:length(ref)) ref[[s]] <- ref[[s]][intersect(ref[[s]], unique(c(rownames(df1),rownames(df2))))]
+  for (s in 1:length(ref)) ref[[s]] <- intersect(ref[[s]], intersect(rownames(df1),rownames(df2)))
   df1 <- as.data.frame(df1[intersect(rownames(df1),unique(unlist(ref))),])
   df2 <- as.data.frame(df2[intersect(rownames(df2),unique(unlist(ref))),])
   df2<-df2[,match(colnames(df1),colnames(df2))] # match samples in df2 to that of df1

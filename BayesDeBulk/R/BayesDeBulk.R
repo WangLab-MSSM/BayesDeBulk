@@ -72,8 +72,7 @@ gibbs.sampling.missing.samples<-function(n.iter,Y,p,n,K,index.matrix,burn.in,mea
   for (k in 1:K) pi[sample(n/2),k]<-0.0001
     
   for (j in 1:n.iter){ # -- for loop over iterations
-    print(j)
-    
+
     Z<-matrix(0,n,K)
     
     # --- sample pi's 
@@ -285,8 +284,7 @@ gibbs.sampling<-function(n.iter,Y,p,n,K,index.matrix,burn.in,mean.prior,sigma.pr
   for (k in 1:K) pi[sample(n/2),k]<-0.00001
   
   for (j in 1:n.iter){ # -- for loop over iterations
-    print(j)
-    
+
     Z<-matrix(0,n,K)
     
     # --- sample pi's 
@@ -439,11 +437,12 @@ BayesDeBulk<-function(n.iter,burn.in,Y,markers){
     print("Log normalizing data 1.")
   }
 
+  if (multiomic){
   if (max(df2[!is.na(df2)])>500) {
     df1<-log(df2+1)
     print("Log normalizing data 2.")
   }
- 
+  }
   # slim down signature matrix and data based on markers with prior information
   if (multiomic) {
     ref <- ref[!is.na(match(ref[,3], unique(c(rownames(df1),rownames(df2))))),]
@@ -456,20 +455,20 @@ BayesDeBulk<-function(n.iter,burn.in,Y,markers){
 
     sampleid<-colnames(df1)[!is.na(mg)]
     
-    missing=FALSE
+    missing<-FALSE
     
     mg<-match(colnames(df1),colnames(df2))
     if (sum(is.na(mg))>0){
       df1.new<-cbind(df1.new,df1[,is.na(mg)]) 
       df2.new<-cbind(df2.new,matrix(NA,dim(df2.new)[1],sum(is.na(mg))))
-      missing=TRUE
+      missing<-TRUE
       sampleid<-c(sampleid,colnames(df1)[is.na(mg)])
 }
     mg<-match(colnames(df2),colnames(df1))
     if (sum(is.na(mg))>0){
     df2.new<-cbind(df2.new,df2[,is.na(mg)]) 
     df1.new<-cbind(df1.new,matrix(NA,dim(df1.new)[1],sum(is.na(mg))))
-    missing=TRUE
+    missing<-TRUE
     sampleid<-c(sampleid,colnames(df2)[is.na(mg)])
     }
     
@@ -479,6 +478,7 @@ BayesDeBulk<-function(n.iter,burn.in,Y,markers){
     colnames(df1)<-colnames(df2)<-sampleid
 
       } else {
+        missing<-FALSE
         ref <- ref[!is.na(match(ref[,3], unique(rownames(df1)))),]
         df1 <- as.data.frame(df1[intersect(rownames(df1),unique((ref[,3]))),])
         sampleid<-colnames(df1)
@@ -521,20 +521,7 @@ BayesDeBulk<-function(n.iter,burn.in,Y,markers){
   data<-t(apply(data,1,function(x) (x-mean(x[!is.na(x)]))/sd(x[!is.na(x)])))
   
   # Run Gibbs Sampling
-if (missing==FALSE)  
-  gibbs<-gibbs.sampling(
-    n.iter=n.iter,
-    data,
-    p=dim(data)[1],
-    n=dim(data)[2],
-    k.fix,
-    index.matrix,
-    burn.in,
-    mean.prior=prior.levels,
-    sigma.prior=1
-  )
-  
-  if (missing==TRUE)  
+  if (missing) {  
     gibbs<-gibbs.sampling.missing.samples(
       n.iter=n.iter,
       data,
@@ -545,7 +532,19 @@ if (missing==FALSE)
       burn.in,
       mean.prior=prior.levels,
       sigma.prior=1
-    )
+    ) } else {
+      gibbs<-gibbs.sampling(
+        n.iter=n.iter,
+        data,
+        p=dim(data)[1],
+        n=dim(data)[2],
+        k.fix,
+        index.matrix,
+        burn.in,
+        mean.prior=prior.levels,
+        sigma.prior=1
+      )
+    }
   
   # -- derive point estimate for each cell type (average across MCMC iterations)
   weights<-matrix(0,dim(gibbs[[1]][[1]]),length(gibbs[[1]]))
@@ -566,6 +565,17 @@ if (missing==FALSE)
   
   return(out)
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

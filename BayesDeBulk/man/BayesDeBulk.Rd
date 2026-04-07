@@ -3,7 +3,7 @@
 \title{BayesDeBulk to perform the deconvolution of bulk proteogenomics data.}
 
 \usage{
-BayesDeBulk(n.iter,burn.in,Y,markers)}
+BayesDeBulk(n.iter,burn.in,Y,markers,prior=NULL)}
         
 \arguments{
 \item{n.iter} {Numeric value: number of Gibbs sampler iterations}
@@ -12,8 +12,9 @@ BayesDeBulk(n.iter,burn.in,Y,markers)}
 
 \item{Y} {List object containing expression data for each omic, \code{Y=list(y_1,y_2)} where \code{y_j} is a \code{(p_j x n_j)} matrix with rows corresponding to genes and columns to samples. Genes and samples can vary across datasets. Missing values are not allowed. Rows of \code{Y[[j]]} does not need to be ordered in a specific way.}
 
-\item{markers} {Two dimensional matrix contaning the list of markers differentiating each pair of cell-types. The first column contains the name of cell-type A while the second column of cell-type B. The third column includes the list of markers overexpressed in cell-type A compared to cell-type B. Funtion \code{LM22_markers} produces this matrix based on LM22 signature matrix.}
+\item{markers} {Two-dimensional matrix containing the list of markers distinguishing each pair of cell types. The first column specifies cell type A, and the second column specifies cell type B. The third column contains the markers overexpressed in cell type A relative to cell type B. The function \code{LM22_markers} generates this matrix based on the LM22 signature matrix.}
 
+\item{prior} {Two-dimensional matrix containing marker-level data for multiple genes across different cell types. Rows correspond to genes and columns correspond to cell types. Row names should specify gene identifiers, and column names should specify cell type labels.}
 }
 
 \value{
